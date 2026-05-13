@@ -1,15 +1,21 @@
 package ru.otus.danilchenko.cli;
 
-import ru.otus.danilchenko.domain.DomainService;
-import ru.otus.danilchenko.data.DataRepository;
+import ru.otus.danilchenko.cli.command.GateWayCommand;
+import ru.otus.danilchenko.cli.command.ICommand;
+import ru.otus.danilchenko.cli.interaction.CliInteraction;
+import ru.otus.danilchenko.domain.command.Interaction;
 
 public class CliApp {
-    public static void main(String[] args) {
-        DomainService domainService = new DomainService();
-        DataRepository dataRepository = new DataRepository();
+    private void run(String[] args) {
+        final Interaction interaction = new CliInteraction(args);
+        ICommand command = new GateWayCommand();
+        do {
+            command = command.execute(interaction);
+        } while (command != null);
+    }
 
-        System.out.println("CLI module started");
-        System.out.println(domainService.getMessage());
-        System.out.println(dataRepository.fetchData());
+    public static void main(String[] args) {
+        final var app = new CliApp();
+        app.run(args);
     }
 }
