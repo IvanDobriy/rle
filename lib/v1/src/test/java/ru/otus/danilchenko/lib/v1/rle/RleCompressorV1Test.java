@@ -137,4 +137,85 @@ class RleCompressorV1Test {
 
         assertEquals("X", Files.readString(decompressed));
     }
+
+    @Test
+    void nonRepeatingExactly128Bytes(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 128; i++) {
+            sb.append((char) ('A' + (i % 26)));
+        }
+        Files.writeString(initial, sb.toString());
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals(sb.toString(), Files.readString(decompressed));
+    }
+
+    @Test
+    void nonRepeatingExactly129Bytes(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 129; i++) {
+            sb.append((char) ('A' + (i % 26)));
+        }
+        Files.writeString(initial, sb.toString());
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals(sb.toString(), Files.readString(decompressed));
+    }
+
+    @Test
+    void nonRepeatingEndsWithSingleByte(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        String content = "ABCDEFGZ";
+        Files.writeString(initial, content);
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals(content, Files.readString(decompressed));
+    }
+
+    @Test
+    void nonRepeatingFollowedByRepeating(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        String content = "ABCDEFZZZZZ";
+        Files.writeString(initial, content);
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals(content, Files.readString(decompressed));
+    }
+
+    @Test
+    void alternatingNonRepeatingAndRepeating(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        String content = "ABCXXXXDEFYYYYYGH";
+        Files.writeString(initial, content);
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals(content, Files.readString(decompressed));
+    }
 }
