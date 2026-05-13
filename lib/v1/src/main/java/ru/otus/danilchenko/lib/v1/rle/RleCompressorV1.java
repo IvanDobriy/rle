@@ -16,25 +16,42 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
         try (InputStream in = Files.newInputStream(initial);
              OutputStream out = Files.newOutputStream(compressed)) {
 
-            int current = in.read();
-            if (current == -1) {
+            byte[] data = in.readAllBytes();
+            if (data.length == 0) {
                 return;
             }
 
-            int count = 1;
-            int b;
-            while ((b = in.read()) != -1) {
-                if (b == current && count < 255) {
-                    count++;
-                } else {
+            int i = 0;
+            while (i < data.length) {
+                if (i + 1 < data.length && data[i] == data[i + 1]) {
+                    // Повторяющаяся последовательность: 1..127
+                    int runStart = i;
+                    byte value = data[i];
+                    while (i < data.length && data[i] == value && (i - runStart) < 127) {
+                        i++;
+                    }
+                    int count = i - runStart;
                     out.write(count);
-                    out.write(current);
-                    current = b;
-                    count = 1;
+                    out.write(value);
+                } else {
+                    // Неповторяющаяся последовательность: -128..-1 (длина 1..128)
+                    int runStart = i;
+                    while (i < data.length) {
+                        if (i + 1 < data.length && data[i] == data[i + 1]) {
+                            break;
+                        }
+                        if ((i - runStart) >= 128) {
+                            break;
+                        }
+                        i++;
+                    }
+                    int count = i - runStart;
+                    out.write(-count);
+                    for (int j = runStart; j < i; j++) {
+                        out.write(data[j]);
+                    }
                 }
             }
-            out.write(count);
-            out.write(current);
 
         } catch (IOException e) {
             throw new RuntimeException("Compression failed", e);
@@ -46,14 +63,30 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
         try (InputStream in = Files.newInputStream(compressed);
              OutputStream out = Files.newOutputStream(decompressed)) {
 
-            int count;
-            while ((count = in.read()) != -1) {
-                int value = in.read();
-                if (value == -1) {
-                    throw new IllegalArgumentException("Invalid RLE data: odd number of bytes");
-                }
-                for (int i = 0; i < count; i++) {
-                    out.write(value);
+            int countByte;
+            while ((countByte = in.read()) != -1) {
+                byte count = (byte) countByte;
+                if (count > 0) {
+                    // Повторяющаяся: count в диапазоне 1..127
+                    int value = in.read();
+                    if (value == -1) {
+                        throw new IllegalArgumentException("Unexpected EOF in repeated sequence");
+                    }
+                    for (int i = 0; i < count; i++) {
+                        out.write(value);
+                    }
+                } else if (count < 0) {
+                    // Неповторяющаяся: длина = -count, в диапазоне 1..128
+                    int length = -count;
+                    for (int i = 0; i < length; i++) {
+                        int value = in.read();
+                        if (value == -1) {
+                            throw new IllegalArgumentException("Unexpected EOF in non-repeated sequence");
+                        }
+                        out.write(value);
+                    }
+                } else {
+                    throw new IllegalArgumentException("Invalid RLE count: 0");
                 }
             }
 

@@ -43,7 +43,73 @@ class RleCompressorV1Test {
     }
 
     @Test
-    void compressedSmallerThanOriginal(@TempDir Path tempDir) throws Exception {
+    void onlyNonRepeatingSequence(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        String content = "ABCDEFGH";
+        Files.writeString(initial, content);
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals(content, Files.readString(decompressed));
+    }
+
+    @Test
+    void onlyRepeatingSequence(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        String content = "AAAAAAAAAA";
+        Files.writeString(initial, content);
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals(content, Files.readString(decompressed));
+    }
+
+    @Test
+    void longRepeatingSequenceSplitsAt127(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 300; i++) {
+            sb.append('A');
+        }
+        Files.writeString(initial, sb.toString());
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals(sb.toString(), Files.readString(decompressed));
+    }
+
+    @Test
+    void longNonRepeatingSequenceSplitsAt128(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 200; i++) {
+            sb.append((char) ('A' + (i % 26)));
+        }
+        Files.writeString(initial, sb.toString());
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals(sb.toString(), Files.readString(decompressed));
+    }
+
+    @Test
+    void compressedSmallerThanOriginalForRepeating(@TempDir Path tempDir) throws Exception {
         Path initial = tempDir.resolve("initial.txt");
         Path compressed = tempDir.resolve("compressed.rle");
 
@@ -56,5 +122,19 @@ class RleCompressorV1Test {
         compressor.compress(initial, compressed);
 
         assertTrue(Files.size(compressed) < Files.size(initial));
+    }
+
+    @Test
+    void singleByte(@TempDir Path tempDir) throws Exception {
+        Path initial = tempDir.resolve("initial.txt");
+        Path compressed = tempDir.resolve("compressed.rle");
+        Path decompressed = tempDir.resolve("decompressed.txt");
+
+        Files.writeString(initial, "X");
+
+        compressor.compress(initial, compressed);
+        compressor.decompress(compressed, decompressed);
+
+        assertEquals("X", Files.readString(decompressed));
     }
 }
