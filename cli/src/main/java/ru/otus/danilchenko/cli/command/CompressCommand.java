@@ -11,7 +11,8 @@ public class CompressCommand extends ACommand {
 
     public CompressCommand(ICommand command) {
         super(command);
-        IRle rle = new RleDataService(new RleCompressorV1(), new RleCompressorV1());
+        RleCompressorV1 compressor = new RleCompressorV1();
+        IRle rle = new RleDataService(compressor, compressor);
         useCase = new CompressUseCase(rle);
     }
 
