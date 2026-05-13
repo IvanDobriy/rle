@@ -2,6 +2,9 @@ package ru.otus.danilchenko.lib.v1.rle;
 
 import ru.otus.danilchenko.lib.api.rle.IRleCompressor;
 import ru.otus.danilchenko.lib.api.rle.IRleDecompressor;
+import ru.otus.danilchenko.lib.api.stack.IStack;
+import ru.otus.danilchenko.lib.v1.array.SingleArray;
+import ru.otus.danilchenko.lib.v1.stack.ArrayStack;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,39 +19,79 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
         try (InputStream in = Files.newInputStream(initial);
              OutputStream out = Files.newOutputStream(compressed)) {
 
-            byte[] data = in.readAllBytes();
-            if (data.length == 0) {
+            IStack<Integer> lookahead = new ArrayStack<>(new SingleArray<>(10));
+            int current = readByte(lookahead, in);
+            if (current == -1) {
                 return;
             }
 
-            int i = 0;
-            while (i < data.length) {
-                if (i + 1 < data.length && data[i] == data[i + 1]) {
+            while (true) {
+                int next = readByte(lookahead, in);
+
+                if (next == -1) {
+                    out.write(-1);
+                    out.write(current);
+                    break;
+                }
+
+                if (current == next) {
                     // Повторяющаяся последовательность: 1..127
-                    int runStart = i;
-                    byte value = data[i];
-                    while (i < data.length && data[i] == value && (i - runStart) < 127) {
-                        i++;
+                    int count = 2;
+                    while (count < 127) {
+                        int b = readByte(lookahead, in);
+                        if (b == current) {
+                            count++;
+                        } else {
+                            unreadByte(lookahead, b);
+                            break;
+                        }
                     }
-                    int count = i - runStart;
                     out.write(count);
-                    out.write(value);
+                    out.write(current);
+
+                    current = readByte(lookahead, in);
+                    if (current == -1) {
+                        break;
+                    }
                 } else {
                     // Неповторяющаяся последовательность: -128..-1 (длина 1..128)
-                    int runStart = i;
-                    while (i < data.length) {
-                        if (i + 1 < data.length && data[i] == data[i + 1]) {
+                    IStack<Byte> seq = new ArrayStack<>(new SingleArray<>(128));
+                    seq.push((byte) current);
+                    seq.push((byte) next);
+
+                    while (seq.size() < 128) {
+                        int b = readByte(lookahead, in);
+                        if (b == -1) {
                             break;
                         }
-                        if ((i - runStart) >= 128) {
+
+                        int peek = readByte(lookahead, in);
+                        if (peek == b) {
+                            unreadByte(lookahead, peek);
+                            unreadByte(lookahead, b);
                             break;
+                        } else {
+                            if (peek != -1) {
+                                unreadByte(lookahead, peek);
+                            }
+                            seq.push((byte) b);
                         }
-                        i++;
                     }
-                    int count = i - runStart;
+
+                    int count = seq.size();
                     out.write(-count);
-                    for (int j = runStart; j < i; j++) {
-                        out.write(data[j]);
+
+                    IStack<Byte> rev = new ArrayStack<>(new SingleArray<>(count));
+                    while (seq.size() > 0) {
+                        rev.push(seq.pop());
+                    }
+                    while (rev.size() > 0) {
+                        out.write(rev.pop());
+                    }
+
+                    current = readByte(lookahead, in);
+                    if (current == -1) {
+                        break;
                     }
                 }
             }
@@ -78,12 +121,21 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
                 } else if (count < 0) {
                     // Неповторяющаяся: длина = -count, в диапазоне 1..128
                     int length = -count;
+                    IStack<Byte> seq = new ArrayStack<>(new SingleArray<>(length));
                     for (int i = 0; i < length; i++) {
                         int value = in.read();
                         if (value == -1) {
                             throw new IllegalArgumentException("Unexpected EOF in non-repeated sequence");
                         }
-                        out.write(value);
+                        seq.push((byte) value);
+                    }
+
+                    IStack<Byte> rev = new ArrayStack<>(new SingleArray<>(length));
+                    while (seq.size() > 0) {
+                        rev.push(seq.pop());
+                    }
+                    while (rev.size() > 0) {
+                        out.write(rev.pop());
                     }
                 } else {
                     throw new IllegalArgumentException("Invalid RLE count: 0");
@@ -93,5 +145,16 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
         } catch (IOException e) {
             throw new RuntimeException("Decompression failed", e);
         }
+    }
+
+    private int readByte(IStack<Integer> lookahead, InputStream in) throws IOException {
+        if (lookahead.size() > 0) {
+            return lookahead.pop();
+        }
+        return in.read();
+    }
+
+    private void unreadByte(IStack<Integer> lookahead, int b) {
+        lookahead.push(b);
     }
 }
