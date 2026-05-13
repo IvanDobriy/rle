@@ -12,6 +12,9 @@ public enum ECommand {
         this.name = name;
     }
     public static ECommand find(String name){
+        if(name == null){
+            return null;
+        }
         switch (name){
             case "exit": return EXIT;
             case "help": return HELP;
