@@ -16,6 +16,7 @@ public class GateWayCommand implements ICommand {
         commands.insert(ECommand.GREETING.name(), new GreetingCommand(commands.find(ECommand.EXIT.name())));
         commands.insert(ECommand.HELP.name(), new HelpCommand(commands.find(ECommand.EXIT.name())));
         commands.insert(ECommand.COMPRESS.name(), new CompressCommand(commands.find(ECommand.EXIT.name())));
+        commands.insert(ECommand.DECOMPRESS.name(), new DeCompressCommand(commands.find(ECommand.EXIT.name())));
     }
 
     @Override

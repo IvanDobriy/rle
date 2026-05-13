@@ -4,7 +4,8 @@ public enum ECommand {
     EXIT("exit"),
     HELP("help"),
     GREETING("greeting"),
-    COMPRESS("compress");
+    COMPRESS("compress"),
+    DECOMPRESS("decompress");
 
     private String name;
     private ECommand(String name){
@@ -16,6 +17,7 @@ public enum ECommand {
             case "help": return HELP;
             case "greeting": return GREETING;
             case "compress": return COMPRESS;
+            case "decompress": return DECOMPRESS;
             default: return null;
         }
     }
