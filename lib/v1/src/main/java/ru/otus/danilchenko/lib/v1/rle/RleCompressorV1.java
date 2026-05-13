@@ -55,7 +55,8 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
                     }
                 } else {
                     // Неповторяющаяся последовательность: -128..-1 (длина 1..128)
-                    IStack<Byte> seq = new ArrayStack<>(new SingleArray<>(128));
+                    SingleArray<Byte> buffer = new SingleArray<>(1);
+                    IStack<Byte> seq = new ArrayStack<>(buffer);
                     seq.push((byte) current);
                     seq.push((byte) next);
 
@@ -80,13 +81,8 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
 
                     int count = seq.size();
                     out.write(-count);
-
-                    IStack<Byte> rev = new ArrayStack<>(new SingleArray<>(count));
-                    while (seq.size() > 0) {
-                        rev.push(seq.pop());
-                    }
-                    while (rev.size() > 0) {
-                        out.write(rev.pop());
+                    for (int i = 0; i < count; i++) {
+                        out.write(buffer.get(i));
                     }
 
                     current = readByte(lookahead, in);
@@ -121,7 +117,8 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
                 } else if (count < 0) {
                     // Неповторяющаяся: длина = -count, в диапазоне 1..128
                     int length = -count;
-                    IStack<Byte> seq = new ArrayStack<>(new SingleArray<>(length));
+                    SingleArray<Byte> buffer = new SingleArray<>(1);
+                    IStack<Byte> seq = new ArrayStack<>(buffer);
                     for (int i = 0; i < length; i++) {
                         int value = in.read();
                         if (value == -1) {
@@ -130,12 +127,8 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
                         seq.push((byte) value);
                     }
 
-                    IStack<Byte> rev = new ArrayStack<>(new SingleArray<>(length));
-                    while (seq.size() > 0) {
-                        rev.push(seq.pop());
-                    }
-                    while (rev.size() > 0) {
-                        out.write(rev.pop());
+                    for (int i = 0; i < length; i++) {
+                        out.write(buffer.get(i));
                     }
                 } else {
                     throw new IllegalArgumentException("Invalid RLE count: 0");
