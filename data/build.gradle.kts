@@ -1,4 +1,4 @@
 dependencies {
     implementation(project(":domain"))
-    implementation(project(":lib"))
+    implementation(project(":lib:api"))
 }

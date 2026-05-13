@@ -1,6 +1,6 @@
 package ru.otus.danilchenko.domain;
 
-import ru.otus.danilchenko.lib.LibUtil;
+import ru.otus.danilchenko.lib.api.LibUtil;
 
 public class DomainService {
     public String getMessage() {

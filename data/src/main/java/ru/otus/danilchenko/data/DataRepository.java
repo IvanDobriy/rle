@@ -1,6 +1,6 @@
 package ru.otus.danilchenko.data;
 
-import ru.otus.danilchenko.lib.LibUtil;
+import ru.otus.danilchenko.lib.api.LibUtil;
 
 public class DataRepository {
     public String fetchData() {
