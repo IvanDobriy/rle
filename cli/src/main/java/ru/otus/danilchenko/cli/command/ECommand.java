@@ -9,4 +9,12 @@ public enum ECommand {
     private ECommand(String name){
         this.name = name;
     }
+    public static ECommand find(String name){
+        switch (name){
+            case "exit": return EXIT;
+            case "help": return HELP;
+            case "greeting": return GREETING;
+            default: return null;
+        }
+    }
 }
