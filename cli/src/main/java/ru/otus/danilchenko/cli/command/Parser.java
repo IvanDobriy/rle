@@ -18,7 +18,7 @@ public class Parser {
         commandArgs = new SingleArray<>(0);
     }
 
-    Parser handle() {
+    public Parser handle() {
         int argsSize = interaction.arguments().size();
         for (int i = 0; i < argsSize; i++) {
             String argument = interaction.arguments().get(i).trim().toLowerCase();
@@ -34,11 +34,11 @@ public class Parser {
         return this;
     }
 
-    String commandName() {
+    public String commandName() {
         return commandName;
     }
 
-    Interaction interaction() {
+    public Interaction interaction() {
         String[] args = new String[commandArgs.size()];
         for (int i = 0; i < args.length; i++) {
             args[i] = commandArgs.get(i);
