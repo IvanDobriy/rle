@@ -1,14 +1,18 @@
 package ru.otus.danilchenko.cli.command;
 
+import ru.otus.danilchenko.data.rle.RleDataService;
 import ru.otus.danilchenko.domain.command.Interaction;
+import ru.otus.danilchenko.domain.data.IRle;
 import ru.otus.danilchenko.domain.use_case.CompressUseCase;
+import ru.otus.danilchenko.lib.v1.rle.RleCompressorV1;
 
 public class CompressCommand extends ACommand {
     private final CompressUseCase useCase;
 
-    public CompressCommand(ICommand command, CompressUseCase useCase) {
+    public CompressCommand(ICommand command) {
         super(command);
-        this.useCase = useCase;
+        IRle rle = new RleDataService(new RleCompressorV1(), new RleCompressorV1());
+        useCase = new CompressUseCase(rle);
     }
 
     @Override
