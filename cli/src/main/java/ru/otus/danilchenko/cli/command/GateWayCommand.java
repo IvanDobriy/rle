@@ -17,7 +17,7 @@ public class GateWayCommand implements ICommand {
             commandName = null;
         }
 
-        commands = new OpenAddressHashTable<>(new StringHasher(), 0, 1);
+        commands = new OpenAddressHashTable<>(new StringHasher(), 1, 1);
         commands.insert(ECommand.EXIT.name(), new ExitCommand(null));
         commands.insert(ECommand.GREETING.name(), new GreetingCommand(commands.find(ECommand.EXIT.name())));
         commands.insert(ECommand.HELP.name(), new HelpCommand(commands.find(ECommand.EXIT.name())));
