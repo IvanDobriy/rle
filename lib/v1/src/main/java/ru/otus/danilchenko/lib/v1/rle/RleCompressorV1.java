@@ -71,12 +71,11 @@ public class RleCompressorV1 implements IRleCompressor, IRleDecompressor {
                             unreadByte(lookahead, peek);
                             unreadByte(lookahead, b);
                             break;
-                        } else {
-                            if (peek != -1) {
-                                unreadByte(lookahead, peek);
-                            }
-                            seq.push((byte) b);
                         }
+                        if (peek != -1) {
+                            unreadByte(lookahead, peek);
+                        }
+                        seq.push((byte) b);
                     }
 
                     int count = seq.size();
