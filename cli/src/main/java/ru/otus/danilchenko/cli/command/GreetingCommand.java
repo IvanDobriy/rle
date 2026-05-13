@@ -2,9 +2,9 @@ package ru.otus.danilchenko.cli.command;
 
 import ru.otus.danilchenko.domain.command.Interaction;
 
-public class HelpCommand extends ACommand {
+public class GreetingCommand extends ACommand {
 
-    public HelpCommand(ICommand command) {
+    public GreetingCommand(ICommand command) {
         super(command);
     }
 

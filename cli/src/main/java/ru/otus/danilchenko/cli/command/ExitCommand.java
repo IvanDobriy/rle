@@ -2,14 +2,14 @@ package ru.otus.danilchenko.cli.command;
 
 import ru.otus.danilchenko.domain.command.Interaction;
 
-public class HelpCommand extends ACommand {
+public class ExitCommand extends ACommand {
 
-    public HelpCommand(ICommand command) {
+    public ExitCommand(ICommand command) {
         super(command);
     }
 
     @Override
     public ICommand execute(Interaction interaction) {
-        return nextCommand;
+        return null;
     }
 }
